@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predictive Engine Maintenance — Quantum-Inspired Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F2F4F8;
+    --bg-grid: rgba(19,26,42,0.05);
+    --panel:#FFFFFF;
+    --panel-alt:#F7F9FC;
+    --border:#DBE2EE;
+    --text:#141B2C;
+    --text-dim:#5B677D;
+    --text-faint:#8A95A8;
+    --cyan:#0E8E83;
+    --cyan-soft: rgba(14,142,131,0.12);
+    --amber:#B4700E;
+    --amber-soft: rgba(180,112,14,0.14);
+    --red:#C23A44;
+    --red-soft: rgba(194,58,68,0.13);
+    --green:#1E8F63;
+    --green-soft: rgba(30,143,99,0.13);
+    --line-health: var(--cyan);
+    --line-fail: var(--amber);
+    --shadow: 0 1px 2px rgba(20,27,44,0.04), 0 8px 24px -12px rgba(20,27,44,0.10);
+    --radius-sm: 3px;
+    --radius-md: 8px;
+    --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0A0E17;
+      --bg-grid: rgba(255,255,255,0.045);
+      --panel:#121827;
+      --panel-alt:#0D1320;
+      --border:#243352;
+      --text:#E8ECF6;
+      --text-dim:#93A0B8;
+      --text-faint:#5E6B84;
+      --cyan:#3AD6C9;
+      --cyan-soft: rgba(58,214,201,0.12);
+      --amber:#F5A93D;
+      --amber-soft: rgba(245,169,61,0.14);
+      --red:#F2545F;
+      --red-soft: rgba(242,84,95,0.14);
+      --green:#3FD497;
+      --green-soft: rgba(63,212,151,0.13);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px -16px rgba(0,0,0,0.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0A0E17;
+    --bg-grid: rgba(255,255,255,0.045);
+    --panel:#121827;
+    --panel-alt:#0D1320;
+    --border:#243352;
+    --text:#E8ECF6;
+    --text-dim:#93A0B8;
+    --text-faint:#5E6B84;
+    --cyan:#3AD6C9;
+    --cyan-soft: rgba(58,214,201,0.12);
+    --amber:#F5A93D;
+    --amber-soft: rgba(245,169,61,0.14);
+    --red:#F2545F;
+    --red-soft: rgba(242,84,95,0.14);
+    --green:#3FD497;
+    --green-soft: rgba(63,212,151,0.13);
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px -16px rgba(0,0,0,0.55);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0/38px 38px,
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0/38px 38px,
+      var(--bg);
+    color:var(--text);
+    font-family:var(--font-sans);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.45;
+  }
+  a{color:inherit;}
+  .app{max-width:1240px;margin:0 auto;padding:28px 22px 72px;}
+
+  /* ---------- Header ---------- */
+  .topbar{
+    display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;
+    gap:18px;padding-bottom:20px;border-bottom:1px solid var(--border);
+  }
+  .titleblock .kicker{
+    font-family:var(--font-mono);font-size:11.5px;letter-spacing:0.04em;
+    color:var(--cyan);margin-bottom:8px;display:flex;align-items:center;gap:8px;
+  }
+  .kicker .dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 3px var(--cyan-soft);}
+  .titleblock h1{
+    font-size:clamp(22px,3.4vw,32px);margin:0 0 6px;font-weight:700;letter-spacing:-0.01em;
+  }
+  .titleblock p{margin:0;color:var(--text-dim);font-size:14px;max-width:56ch;}
+  .meta-tags{display:flex;flex-wrap:wrap;gap:8px;}
+  .tag{
+    font-family:var(--font-mono);font-size:11px;color:var(--text-dim);
+    border:1px solid var(--border);background:var(--panel-alt);
+    padding:5px 9px;border-radius:100px;white-space:nowrap;
+  }
+  .tag b{color:var(--text);font-weight:600;}
+
+  /* ---------- Layout ---------- */
+  .layout{display:grid;grid-template-columns:284px 1fr;gap:22px;margin-top:24px;align-items:start;}
+  @media (max-width:900px){ .layout{grid-template-columns:1fr;} .controls{position:static !important;} }
+
+  .controls{
+    position:sticky;top:20px;
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-md);
+    padding:18px;box-shadow:var(--shadow);
+  }
+  .controls h2{
+    font-size:12px;text-transform:none;letter-spacing:0.01em;margin:0 0 4px;
+    font-weight:600;color:var(--text);
+  }
+  .controls .sub{font-size:12px;color:var(--text-faint);margin:0 0 16px;}
+  .slider-group{margin-bottom:18px;}
+  .slider-group:last-of-type{margin-bottom:8px;}
+  .slider-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+  .slider-head label{font-size:13px;font-weight:500;color:var(--text);}
+  .slider-head .val{font-family:var(--font-mono);font-size:13px;color:var(--cyan);font-weight:600;}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;
+    background:var(--border);outline:none;margin:8px 0 5px;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:15px;height:15px;border-radius:50%;
+    background:var(--cyan);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--cyan);cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:15px;height:15px;border-radius:50%;background:var(--cyan);border:2px solid var(--panel);
+    box-shadow:0 0 0 1px var(--cyan);cursor:pointer;
+  }
+  .slider-note{font-size:11px;color:var(--text-faint);line-height:1.35;}
+  .reset-btn{
+    width:100%;margin-top:6px;padding:9px 12px;border-radius:var(--radius-sm);
+    border:1px solid var(--border);background:var(--panel-alt);color:var(--text-dim);
+    font-family:var(--font-sans);font-size:12.5px;font-weight:500;cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .reset-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+
+  /* ---------- Panels ---------- */
+  .panels{display:grid;gap:18px;}
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  @media (max-width:720px){ .kpi-row{grid-template-columns:repeat(2,1fr);} }
+  .kpi{
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-md);
+    padding:16px 16px 14px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+  }
+  .kpi .klabel{font-size:11.5px;color:var(--text-faint);margin-bottom:8px;}
+  .kpi .kval{font-family:var(--font-mono);font-size:26px;font-weight:600;letter-spacing:-0.01em;}
+  .kpi .ksub{font-size:11.5px;margin-top:5px;color:var(--text-dim);}
+  .kpi.status-good .kval{color:var(--green);}
+  .kpi.status-warn .kval{color:var(--amber);}
+  .kpi.status-bad .kval{color:var(--red);}
+  .action-badge{
+    display:inline-block;font-family:var(--font-mono);font-weight:600;font-size:17px;
+    padding:2px 0;
+  }
+
+  .card{
+    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-md);
+    padding:20px;box-shadow:var(--shadow);
+  }
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .card-head h3{margin:0 0 3px;font-size:14.5px;font-weight:600;}
+  .card-head .desc{font-size:12px;color:var(--text-faint);max-width:52ch;}
+  .card-head .formula{font-family:var(--font-mono);font-size:12px;color:var(--cyan);background:var(--cyan-soft);
+    padding:4px 9px;border-radius:100px;white-space:nowrap;}
+
+  .grid-2{display:grid;grid-template-columns:1.05fr 0.95fr;gap:22px;}
+  @media (max-width:760px){ .grid-2{grid-template-columns:1fr;} }
+
+  /* Matrix */
+  .matrix-wrap{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
+  .matrix{
+    display:grid;grid-template-columns:repeat(2,52px);grid-template-rows:repeat(2,44px);
+    border:2px solid var(--text-dim);border-radius:2px;position:relative;
+  }
+  .matrix::before,.matrix::after{content:"";position:absolute;top:-2px;bottom:-2px;width:6px;border:2px solid var(--text-dim);}
+  .matrix::before{left:-6px;border-right:none;}
+  .matrix::after{right:-6px;border-left:none;}
+  .matrix span{display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:14px;font-weight:600;}
+  .matrix .off{color:var(--amber);}
+  .matrix .diag{color:var(--cyan);}
+  .char-eq{font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim);line-height:1.7;}
+
+  .eig-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 16px;}
+  .eig-card{border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;background:var(--panel-alt);}
+  .eig-card.dom{border-color:var(--amber);}
+  .eig-card .elabel{font-size:10.5px;color:var(--text-faint);margin-bottom:3px;}
+  .eig-card .eval{font-family:var(--font-mono);font-size:20px;font-weight:600;}
+  .eig-card.dom .eval{color:var(--amber);}
+  .eig-card:not(.dom) .eval{color:var(--cyan);}
+
+  .attrib-row{margin-bottom:9px;}
+  .attrib-row .albl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:var(--text-dim);}
+  .albl b{color:var(--text);font-family:var(--font-mono);}
+  .bar-track{height:6px;border-radius:4px;background:var(--border);overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;}
+
+  /* ellipse viz */
+  .ellipse-box{display:flex;flex-direction:column;align-items:center;}
+  .ellipse-box svg{width:100%;max-width:240px;height:auto;}
+  .ellipse-cap{font-size:11.5px;color:var(--text-faint);text-align:center;margin-top:8px;max-width:32ch;}
+
+  /* state circle */
+  .state-row{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:center;}
+  @media (max-width:520px){ .state-row{grid-template-columns:1fr;} }
+  .circle-box svg{width:100%;max-width:180px;height:auto;display:block;margin:0 auto;}
+  .amp-stats{display:flex;flex-direction:column;gap:12px;}
+  .amp-line{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-dim);margin-bottom:5px;}
+  .amp-line b{font-family:var(--font-mono);color:var(--text);}
+
+  /* tensor table */
+  .subsys-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+  @media (max-width:560px){ .subsys-row{grid-template-columns:1fr;} }
+  .subsys{border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;background:var(--panel-alt);}
+  .subsys .sname{font-size:11.5px;color:var(--text-faint);margin-bottom:6px;}
+  .subsys .svals{font-family:var(--font-mono);font-size:12.5px;color:var(--text);}
+
+  table.jt{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.jt th{text-align:left;font-weight:500;color:var(--text-faint);font-size:11px;padding:0 0 8px;border-bottom:1px solid var(--border);}
+  table.jt td{padding:9px 0;border-bottom:1px solid var(--border);vertical-align:middle;}
+  table.jt tr:last-child td{border-bottom:none;}
+  table.jt .ket{font-family:var(--font-mono);font-weight:600;}
+  table.jt .pbar-cell{width:34%;}
+  table.jt .pval{font-family:var(--font-mono);text-align:right;width:60px;display:inline-block;}
+
+  .joint-callouts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+  .callout{border:1px dashed var(--border);border-radius:var(--radius-sm);padding:10px 12px;}
+  .callout .clabel{font-size:11px;color:var(--text-faint);margin-bottom:4px;}
+  .callout .cval{font-family:var(--font-mono);font-size:19px;font-weight:600;color:var(--text);}
+
+  /* time evolution */
+  .evo-chart{width:100%;height:auto;display:block;}
+  .evo-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--text-dim);}
+  .evo-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:14px;height:3px;border-radius:2px;display:inline-block;}
+  .evo-notes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+  @media (max-width:560px){ .evo-notes{grid-template-columns:1fr;} }
+  .evo-notes .note{font-size:12px;color:var(--text-dim);border-left:2px solid var(--border);padding-left:10px;}
+  .evo-notes .note b{color:var(--text);font-family:var(--font-mono);font-weight:600;}
+
+  footer{margin-top:30px;padding-top:18px;border-top:1px solid var(--border);}
+  footer p{font-size:11.5px;color:var(--text-faint);max-width:80ch;margin:0;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="titleblock">
+      <div class="kicker"><span class="dot"></span>QUANTUM-INSPIRED DIAGNOSTICS</div>
+      <h1>Predictive Engine Maintenance Monitor</h1>
+      <p>Engine telemetry cast as a two-level state vector; a Hermitian stress operator is eigen-decomposed live to score material health, failure risk and diagnostic confidence.</p>
+    </div>
+    <div class="meta-tags">
+      <span class="tag">Zone <b>Cylinder Head — Bank 1</b></span>
+      <span class="tag">Model <b>2×2 Hermitian Stress Operator</b></span>
+      <span class="tag">Basis <b>|Healthy⟩, |Damaged⟩</b></span>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- CONTROLS -->
+    <aside class="controls">
+      <h2>Engine Telemetry</h2>
+      <p class="sub">Five live sensor channels. Move a slider — the stress operator, eigen-decomposition and every readout below recompute instantly.</p>
+
+      <div class="slider-group">
+        <div class="slider-head"><label for="thermal">Thermal / load stress</label><span class="val" id="thermal-val">52</span></div>
+        <input type="range" id="thermal" min="0" max="100" value="52">
+        <div class="slider-note">Diagonal term S₁₁ of the stress operator.</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-head"><label for="vibration">Vibration RMS</label><span class="val" id="vibration-val">34</span></div>
+        <input type="range" id="vibration" min="0" max="100" value="34">
+        <div class="slider-note">Drives the off-diagonal coupling S₁₂ = S₂₁.</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-head"><label for="oilWear">Oil / wear index</label><span class="val" id="oilWear-val">21</span></div>
+        <input type="range" id="oilWear" min="0" max="100" value="21">
+        <div class="slider-note">Weighted into the state-vector damage amplitude and the lubrication subsystem.</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-head"><label for="cooling">Cooling efficiency</label><span class="val" id="cooling-val">64</span></div>
+        <input type="range" id="cooling" min="0" max="100" value="64">
+        <div class="slider-note">Offsets risk — raises coherence by damping noise.</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-head"><label for="noise">Sensor noise / uncertainty</label><span class="val" id="noise-val">24</span></div>
+        <input type="range" id="noise" min="0" max="100" value="24">
+        <div class="slider-note">Diagonal term S₂₂ — also drives decoherence.</div>
+      </div>
+
+      <button class="reset-btn" id="resetBtn">Reset to baseline defaults</button>
+    </aside>
+
+    <!-- PANELS -->
+    <main class="panels">
+
+      <!-- KPI ROW -->
+      <div class="kpi-row">
+        <div class="kpi" id="kpi-health">
+          <div class="klabel">Material health</div>
+          <div class="kval" id="val-health">—</div>
+          <div class="ksub">1 − failure probability</div>
+        </div>
+        <div class="kpi" id="kpi-fail">
+          <div class="klabel">Failure probability</div>
+          <div class="kval" id="val-fail">—</div>
+          <div class="ksub">Logistic model on λ₁</div>
+        </div>
+        <div class="kpi" id="kpi-coh">
+          <div class="klabel">Coherence / confidence</div>
+          <div class="kval" id="val-coh">—</div>
+          <div class="ksub" id="val-coh-label">1 − decoherence</div>
+        </div>
+        <div class="kpi" id="kpi-action">
+          <div class="klabel">Recommended action</div>
+          <div class="kval action-badge" id="val-action">—</div>
+          <div class="ksub" id="val-action-note">Monitor / Inspect / Service Now</div>
+        </div>
+      </div>
+
+      <!-- STRESS OPERATOR + EIGEN-DECOMPOSITION -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h3>Stress operator &amp; eigen-decomposition</h3>
+            <div class="desc">Two correlated telemetry channels form a Hermitian operator S; its eigenvalues are the engine's principal stress modes.</div>
+          </div>
+          <div class="formula">λ² − Tr(S)·λ + det(S) = 0</div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="matrix-wrap">
+              <div class="matrix">
+                <span class="diag" id="mat-a">52</span><span class="off" id="mat-b">14.0</span>
+                <span class="off" id="mat-b2">14.0</span><span class="diag" id="mat-d">24</span>
+              </div>
+              <div class="char-eq" id="char-eq">
+                λ² − 76.0λ + 852.0 = 0<br>
+                λ = (76.0 ± √1568.0) / 2
+              </div>
+            </div>
+
+            <div class="eig-pair">
+              <div class="eig-card dom">
+                <div class="elabel">λ₁ — dominant mode</div>
+                <div class="eval" id="lambda1">57.80</div>
+              </div>
+              <div class="eig-card">
+                <div class="elabel">λ₂ — secondary mode</div>
+                <div class="eval" id="lambda2">18.20</div>
+              </div>
+            </div>
+
+            <div class="attrib-row">
+              <div class="albl"><span>Thermal / load stress</span><b id="attrib-thermal">85%</b></div>
+              <div class="bar-track"><div class="bar-fill" id="attrib-thermal-bar" style="width:85%;background:var(--amber);"></div></div>
+            </div>
+            <div class="attrib-row">
+              <div class="albl"><span>Noise / uncertainty</span><b id="attrib-noise">15%</b></div>
+              <div class="bar-track"><div class="bar-fill" id="attrib-noise-bar" style="width:15%;background:var(--cyan);"></div></div>
+            </div>
+          </div>
+
+          <div class="ellipse-box">
+            <svg id="ellipse-svg" viewBox="0 0 240 220"></svg>
+            <div class="ellipse-cap" id="ellipse-cap">Geometric action of S on the unit circle. Solid ellipse = principal stress directions, scaled so the major axis is λ₁.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATE VECTOR -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h3>State vector — engine health</h3>
+            <div class="desc">Thermal load, vibration RMS and oil/wear index are fused into a normalised two-level state.</div>
+          </div>
+          <div class="formula">|ψ⟩ = α|H⟩ + β|D⟩</div>
+        </div>
+        <div class="state-row">
+          <div class="circle-box">
+            <svg id="state-svg" viewBox="0 0 180 200"></svg>
+          </div>
+          <div class="amp-stats">
+            <div>
+              <div class="amp-line"><span>|α|² — probability healthy</span><b id="alpha2">—</b></div>
+              <div class="bar-track"><div class="bar-fill" id="alpha2-bar" style="background:var(--green);"></div></div>
+            </div>
+            <div>
+              <div class="amp-line"><span>|β|² — probability damaged</span><b id="beta2">—</b></div>
+              <div class="bar-track"><div class="bar-fill" id="beta2-bar" style="background:var(--red);"></div></div>
+            </div>
+            <div class="amp-line" style="margin-top:2px;"><span>α, β (amplitudes)</span><b id="alpha-beta">—</b></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TENSOR PRODUCT -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h3>Joint subsystem risk — tensor product</h3>
+            <div class="desc">Combustion and lubrication treated as independent two-level states; their tensor product gives the joint failure risk neither subsystem shows alone.</div>
+          </div>
+          <div class="formula">|ψ⟩ = |ψ_comb⟩ ⊗ |ψ_lub⟩</div>
+        </div>
+
+        <div class="subsys-row">
+          <div class="subsys">
+            <div class="sname">Combustion subsystem — cylinder head, EGT, knock</div>
+            <div class="svals" id="comb-vals">α=0.00 · β=0.00</div>
+          </div>
+          <div class="subsys">
+            <div class="sname">Lubrication subsystem — oil film, bearings, wear debris</div>
+            <div class="svals" id="lub-vals">α=0.00 · β=0.00</div>
+          </div>
+        </div>
+
+        <table class="jt">
+          <thead><tr><th>Outcome</th><th>Meaning</th><th>Probability</th><th></th></tr></thead>
+          <tbody id="joint-tbody"></tbody>
+        </table>
+
+        <div class="joint-callouts">
+          <div class="callout">
+            <div class="clabel">P(at least one subsystem damaged)</div>
+            <div class="cval" id="callout-atleast">—</div>
+          </div>
+          <div class="callout">
+            <div class="clabel">P(both subsystems damaged)</div>
+            <div class="cval" id="callout-both">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TIME EVOLUTION -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h3>Projected drift — dominant eigenvalue over operating hours</h3>
+            <div class="desc">From the current slider baseline, thermal stress and vibration are assumed to climb with wear while cooling efficiency is held; λ₁ and failure probability are recomputed at each hour.</div>
+          </div>
+        </div>
+        <svg id="evo-svg" class="evo-chart" viewBox="0 0 760 300"></svg>
+        <div class="evo-legend">
+          <span><i class="swatch" style="background:var(--amber);"></i>Failure probability</span>
+          <span><i class="swatch" style="background:var(--cyan);"></i>Material health</span>
+          <span><i class="swatch" style="background:var(--green-soft);border:1px solid var(--green);"></i>Monitor (&lt;25%)</span>
+          <span><i class="swatch" style="background:var(--amber-soft);border:1px solid var(--amber);"></i>Inspect (25–55%)</span>
+          <span><i class="swatch" style="background:var(--red-soft);border:1px solid var(--red);"></i>Service now (&gt;55%)</span>
+        </div>
+        <div class="evo-notes">
+          <div class="note">Projected to cross the <b>Inspect</b> threshold at <b id="cross-inspect">—</b></div>
+          <div class="note">Projected to cross the <b>Service Now</b> threshold at <b id="cross-service">—</b></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer>
+    <p>Quantum-inspired classical model: the maths (state vectors, Hermitian operators, eigen-decomposition, tensor products) is identical to that used to describe qubits, applied here to structured engineering telemetry rather than physical superposition. Coupling, weighting and wear-drift constants are illustrative calibrations, not fitted to real failure histories.</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const els = {
+    thermal: document.getElementById('thermal'),
+    vibration: document.getElementById('vibration'),
+    oilWear: document.getElementById('oilWear'),
+    cooling: document.getElementById('cooling'),
+    noise: document.getElementById('noise'),
+  };
+  const DEFAULTS = { thermal:52, vibration:34, oilWear:21, cooling:64, noise:24 };
+
+  function clamp(x,lo,hi){ return Math.max(lo, Math.min(hi, x)); }
+  function fmt(n,d){ return Number(n).toFixed(d===undefined?1:d); }
+  function pct(n,d){ return fmt(n*100, d===undefined?1:d) + '%'; }
+
+  function statusColor(pfPct){
+    if (pfPct >= 55) return 'var(--red)';
+    if (pfPct >= 25) return 'var(--amber)';
+    return 'var(--green)';
+  }
+  function statusClass(pfPct){
+    if (pfPct >= 55) return 'status-bad';
+    if (pfPct >= 25) return 'status-warn';
+    return 'status-good';
+  }
+
+  // ---------- Core quantum-inspired math ----------
+  function eigenDecompose(a,b,d){
+    const trace = a+d;
+    const det = a*d - b*b;
+    const disc = Math.sqrt(Math.max(trace*trace - 4*det, 0));
+    const l1 = (trace+disc)/2;
+    const l2 = (trace-disc)/2;
+    let vx, vy;
+    if (Math.abs(b) > 1e-9){
+      vx = b; vy = l1 - a;
+    } else {
+      if (a >= d){ vx=1; vy=0; } else { vx=0; vy=1; }
+    }
+    const norm = Math.hypot(vx,vy) || 1;
+    vx/=norm; vy/=norm;
+    return { trace, det, disc, l1, l2, v1:{x:vx,y:vy} };
+  }
+
+  function sigmoid(x){ return 1/(1+Math.exp(-x)); }
+
+  function computeState(v){
+    const { thermal, vibration, oilWear, cooling, noise } = v;
+
+    // stress operator
+    const coupling = vibration * (7/17); // calibrated so vibration=34 -> coupling=14.0
+    const eig = eigenDecompose(thermal, coupling, noise);
+    const attribThermal = eig.v1.x*eig.v1.x*100;
+    const attribNoise = eig.v1.y*eig.v1.y*100;
+
+    // failure probability from dominant eigenvalue
+    const lambdaCrit = 72, k = 6;
+    const pf = sigmoid((eig.l1 - lambdaCrit)/k);
+    const health = 1-pf;
+
+    // coherence
+    const decoherence = (noise/100) * (1 - 0.5*(cooling/100));
+    const coherence = clamp(1-decoherence, 0, 1);
+
+    // recommended action
+    const pfPct = pf*100;
+    let action = 'Monitor', escalated = false;
+    if (pfPct >= 55) action = 'Service Now';
+    else if (pfPct >= 25) action = 'Inspect';
+    else action = 'Monitor';
+    if (coherence < 0.6 && action === 'Monitor'){ action = 'Inspect'; escalated = true; }
+
+    // single-zone state vector |psi> = alpha|H> + beta|D>
+    const damage = clamp(0.5*(thermal/100) + 0.3*(vibration/100) + 0.2*(oilWear/100), 0, 1);
+    const beta = Math.sqrt(damage), alpha = Math.sqrt(1-damage);
+
+    // tensor product subsystems
+    const Dc = clamp(0.6*(thermal/100) + 0.4*(vibration/100), 0, 1);
+    const alphaC = Math.sqrt(1-Dc), betaC = Math.sqrt(Dc);
+    const Dl = clamp(0.9*(oilWear/100) * (1 - 0.3*(cooling/100)), 0, 1);
+    const alphaL = Math.sqrt(1-Dl), betaL = Math.sqrt(Dl);
+    const ampHH = alphaC*alphaL, ampHD = alphaC*betaL, ampDH = betaC*alphaL, ampDD = betaC*betaL;
+    const joint = {
+      HH: {amp: ampHH, p: ampHH*ampHH},
+      HD: {amp: ampHD, p: ampHD*ampHD},
+      DH: {amp: ampDH, p: ampDH*ampDH},
+      DD: {amp: ampDD, p: ampDD*ampDD},
+    };
+
+    return { thermal, vibration, oilWear, cooling, noise, coupling, eig, attribThermal, attribNoise,
+              pf, pfPct, health, coherence, action, escalated,
+              alpha, beta, alphaC, betaC, alphaL, betaL, joint };
+  }
+
+  function evolveSeries(v, hours){
+    hours = hours || 600;
+    const steps = 61;
+    const pts = [];
+    const thermalTarget = Math.max(96, v.thermal + 6);
+    const vibTarget = Math.max(85, v.vibration + 6);
+    for (let i=0;i<steps;i++){
+      const h = (hours*i)/(steps-1);
+      const t = h/hours;
+      const grow = Math.pow(t, 2.2);
+      const thermal_t = v.thermal + (thermalTarget - v.thermal)*grow;
+      const vibration_t = v.vibration + (vibTarget - v.vibration)*grow;
+      const noise_t = v.noise + v.noise*0.6*t;
+      const coupling_t = vibration_t*(7/17);
+      const eig_t = eigenDecompose(thermal_t, coupling_t, noise_t);
+      const pf_t = sigmoid((eig_t.l1-72)/6)*100;
+      pts.push({ h, pf: pf_t, health: 100-pf_t });
+    }
+    return pts;
+  }
+
+  function findCrossing(series, threshold){
+    for (let i=1;i<series.length;i++){
+      const p0=series[i-1], p1=series[i];
+      if (p0.pf < threshold && p1.pf >= threshold){
+        const frac = (threshold-p0.pf)/(p1.pf-p0.pf);
+        return p0.h + frac*(p1.h-p0.h);
+      }
+    }
+    return null;
+  }
+
+  // ---------- SVG builders ----------
+  function svgEl(tag, attrs){
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function renderEllipse(state){
+    const svg = document.getElementById('ellipse-svg');
+    svg.innerHTML = '';
+    const cx=120, cy=112, R=78;
+    const cs = getComputedStyle(document.body);
+    const border = cs.getPropertyValue('--border').trim();
+    const textFaint = cs.getPropertyValue('--text-faint').trim();
+    const amber = cs.getPropertyValue('--amber').trim();
+    const cyan = cs.getPropertyValue('--cyan').trim();
+
+    // axes
+    svg.appendChild(svgEl('line',{x1:cx-R-14,y1:cy,x2:cx+R+14,y2:cy,stroke:border,'stroke-width':1}));
+    svg.appendChild(svgEl('line',{x1:cx,y1:cy-R-14,x2:cx,y2:cy+R+14,stroke:border,'stroke-width':1}));
+
+    // unit circle (dashed)
+    svg.appendChild(svgEl('circle',{cx:cx,cy:cy,r:R,fill:'none',stroke:border,'stroke-width':1.2,'stroke-dasharray':'3 4'}));
+
+    const l1 = state.eig.l1, l2 = state.eig.l2;
+    const safeL1 = Math.abs(l1) < 1e-6 ? 1e-6 : l1;
+    const a = state.thermal, b = state.coupling, d = state.noise;
+
+    // ellipse = image of unit circle under S, normalised so major semi-axis = R
+    const scale = R/Math.abs(safeL1);
+    let pts = [];
+    const N = 72;
+    for (let i=0;i<=N;i++){
+      const th = (i/N)*Math.PI*2;
+      const cxu = Math.cos(th), cyu = Math.sin(th);
+      const X = (a*cxu + b*cyu) * scale;
+      const Y = (b*cxu + d*cyu) * scale;
+      pts.push((cx+X).toFixed(2)+','+(cy-Y).toFixed(2));
+    }
+    svg.appendChild(svgEl('polygon',{points:pts.join(' '), fill: cyan+'22', stroke: cyan, 'stroke-width':1.6}));
+
+    // eigenvector directions
+    const v1x = state.eig.v1.x, v1y = state.eig.v1.y;
+    const v2x = -v1y, v2y = v1x; // orthogonal
+    const len1 = R, len2 = R*Math.abs(l2)/Math.abs(safeL1);
+    svg.appendChild(svgEl('line',{x1:cx-v1x*len1,y1:cy+v1y*len1,x2:cx+v1x*len1,y2:cy-v1y*len1,stroke:amber,'stroke-width':1.8}));
+    svg.appendChild(svgEl('line',{x1:cx-v2x*len2,y1:cy+v2y*len2,x2:cx+v2x*len2,y2:cy-v2y*len2,stroke:cyan,'stroke-width':1.4,'stroke-dasharray':'2 3'}));
+
+    const lbl1 = svgEl('text',{x:cx+v1x*(len1+10),y:cy-v1y*(len1+10),fill:amber,'font-size':'10','font-family':'var(--font-mono)','text-anchor':'middle'});
+    lbl1.textContent = 'v₁';
+    svg.appendChild(lbl1);
+
+    const capTxt = document.getElementById('ellipse-cap');
+    const ratio = Math.abs(l2/safeL1);
+    capTxt.textContent = 'Principal stress directions of S, normalised so the major axis is λ₁. Minor/major stretch ratio |λ₂/λ₁| ≈ ' + fmt(ratio,2) + '.';
+  }
+
+  function renderStateCircle(state){
+    const svg = document.getElementById('state-svg');
+    svg.innerHTML = '';
+    const cx=90, cy=100, R=70;
+    const cs = getComputedStyle(document.body);
+    const border = cs.getPropertyValue('--border').trim();
+    const green = cs.getPropertyValue('--green').trim();
+    const red = cs.getPropertyValue('--red').trim();
+    const text = cs.getPropertyValue('--text').trim();
+    const dim = cs.getPropertyValue('--text-faint').trim();
+
+    svg.appendChild(svgEl('circle',{cx:cx,cy:cy,r:R,fill:'none',stroke:border,'stroke-width':1.4}));
+    svg.appendChild(svgEl('line',{x1:cx,y1:cy-R,x2:cx,y2:cy+R,stroke:border,'stroke-width':1,'stroke-dasharray':'2 4'}));
+
+    const theta = 2*Math.acos(clamp(state.alpha,0,1));
+    const px = cx + R*Math.sin(theta);
+    const py = cy - R*Math.cos(theta);
+
+    svg.appendChild(svgEl('line',{x1:cx,y1:cy,x2:px,y2:py,stroke: state.beta>state.alpha?red:green,'stroke-width':1.8}));
+    svg.appendChild(svgEl('circle',{cx:px,cy:py,r:5,fill: state.beta>state.alpha?red:green}));
+
+    const topLbl = svgEl('text',{x:cx,y:cy-R-10,fill:text,'font-size':'11','font-family':'var(--font-mono)','text-anchor':'middle'});
+    topLbl.textContent = '|H⟩';
+    svg.appendChild(topLbl);
+    const botLbl = svgEl('text',{x:cx,y:cy+R+18,fill:text,'font-size':'11','font-family':'var(--font-mono)','text-anchor':'middle'});
+    botLbl.textContent = '|D⟩';
+    svg.appendChild(botLbl);
+
+    const sublabel = svgEl('text',{x:cx,y:cy+R+34,fill:dim,'font-size':'9','text-anchor':'middle'});
+    sublabel.textContent = 'θ = 2·arccos(α)';
+    svg.appendChild(sublabel);
+  }
+
+  function renderEvolution(v){
+    const svg = document.getElementById('evo-svg');
+    svg.innerHTML = '';
+    const W=760,H=300, mL=44,mR=18,mT=14,mB=34;
+    const pw=W-mL-mR, ph=H-mT-mB;
+    const series = evolveSeries(v, 600);
+    const cs = getComputedStyle(document.body);
+    const border = cs.getPropertyValue('--border').trim();
+    const dim = cs.getPropertyValue('--text-faint').trim();
+    const green = cs.getPropertyValue('--green').trim();
+    const amber = cs.getPropertyValue('--amber').trim();
+    const red = cs.getPropertyValue('--red').trim();
+    const cyan = cs.getPropertyValue('--cyan').trim();
+
+    function xs(h){ return mL + (h/600)*pw; }
+    function ys(p){ return mT + (1-p/100)*ph; }
+
+    // shaded bands
+    svg.appendChild(svgEl('rect',{x:mL,y:ys(100),width:pw,height:ys(55)-ys(100),fill:red,opacity:0.08}));
+    svg.appendChild(svgEl('rect',{x:mL,y:ys(55),width:pw,height:ys(25)-ys(55),fill:amber,opacity:0.09}));
+    svg.appendChild(svgEl('rect',{x:mL,y:ys(25),width:pw,height:ys(0)-ys(25),fill:green,opacity:0.08}));
+
+    // gridlines + y ticks
+    [0,25,50,55,75,100].forEach(function(p){
+      const y = ys(p);
+      svg.appendChild(svgEl('line',{x1:mL,y1:y,x2:mL+pw,y2:y,stroke:border,'stroke-width': (p===25||p===55)?1.2:0.7, 'stroke-dasharray': (p===25||p===55)?'4 3':'none'}));
+      const t = svgEl('text',{x:mL-8,y:y+3,fill:dim,'font-size':'9','text-anchor':'end','font-family':'var(--font-mono)'});
+      t.textContent = p+'%';
+      svg.appendChild(t);
+    });
+    // x ticks
+    [0,100,200,300,400,500,600].forEach(function(h){
+      const x = xs(h);
+      const t = svgEl('text',{x:x,y:H-mB+16,fill:dim,'font-size':'9','text-anchor':'middle','font-family':'var(--font-mono)'});
+      t.textContent = h;
+      svg.appendChild(t);
+    });
+    const xlab = svgEl('text',{x:mL+pw/2,y:H-2,fill:dim,'font-size':'10','text-anchor':'middle'});
+    xlab.textContent = 'Engine operating hours since last service';
+    svg.appendChild(xlab);
+
+    // lines
+    const healthPts = series.map(function(p){ return xs(p.h)+','+ys(p.health); }).join(' ');
+    const failPts = series.map(function(p){ return xs(p.h)+','+ys(p.pf); }).join(' ');
+    svg.appendChild(svgEl('polyline',{points:healthPts, fill:'none', stroke:cyan, 'stroke-width':2, 'stroke-dasharray':'5 4'}));
+    svg.appendChild(svgEl('polyline',{points:failPts, fill:'none', stroke:amber, 'stroke-width':2.4}));
+
+    // current point marker (t=0, i.e. current sliders)
+    const cur = series[0];
+    svg.appendChild(svgEl('circle',{cx:xs(cur.h),cy:ys(cur.pf),r:4,fill:amber}));
+
+    const crossInspect = findCrossing(series,25);
+    const crossService = findCrossing(series,55);
+    document.getElementById('cross-inspect').textContent = crossInspect===null ? 'not within 600 hrs' : Math.round(crossInspect)+' hrs';
+    document.getElementById('cross-service').textContent = crossService===null ? 'not within 600 hrs' : Math.round(crossService)+' hrs';
+  }
+
+  // ---------- Main render ----------
+  function readInputs(){
+    return {
+      thermal: Number(els.thermal.value),
+      vibration: Number(els.vibration.value),
+      oilWear: Number(els.oilWear.value),
+      cooling: Number(els.cooling.value),
+      noise: Number(els.noise.value),
+    };
+  }
+
+  function render(){
+    const v = readInputs();
+    document.getElementById('thermal-val').textContent = v.thermal;
+    document.getElementById('vibration-val').textContent = v.vibration;
+    document.getElementById('oilWear-val').textContent = v.oilWear;
+    document.getElementById('cooling-val').textContent = v.cooling;
+    document.getElementById('noise-val').textContent = v.noise;
+
+    const s = computeState(v);
+
+    // KPIs
+    const healthKpi = document.getElementById('kpi-health');
+    const failKpi = document.getElementById('kpi-fail');
+    healthKpi.className = 'kpi ' + statusClass(s.pfPct);
+    failKpi.className = 'kpi ' + statusClass(s.pfPct);
+    document.getElementById('val-health').textContent = pct(s.health,1);
+    document.getElementById('val-fail').textContent = pct(s.pf,1);
+
+    const cohKpi = document.getElementById('kpi-coh');
+    let cohClass = 'status-good', cohLabel = 'High confidence';
+    if (s.coherence < 0.5){ cohClass='status-bad'; cohLabel='Low confidence'; }
+    else if (s.coherence < 0.75){ cohClass='status-warn'; cohLabel='Moderate confidence'; }
+    cohKpi.className = 'kpi ' + cohClass;
+    document.getElementById('val-coh').textContent = fmt(s.coherence,3);
+    document.getElementById('val-coh-label').textContent = cohLabel + ' · 1 − decoherence';
+
+    const actionKpi = document.getElementById('kpi-action');
+    actionKpi.className = 'kpi ' + statusClass(s.pfPct);
+    const actionEl = document.getElementById('val-action');
+    actionEl.textContent = s.action;
+    actionEl.style.color = s.action==='Service Now' ? 'var(--red)' : (s.action==='Inspect' ? 'var(--amber)' : 'var(--green)');
+    document.getElementById('val-action-note').textContent = s.escalated
+      ? 'Escalated from Monitor — coherence too low to trust the eigenvalue reading.'
+      : 'Rule: Monitor <25% · Inspect 25–55% · Service Now >55%.';
+
+    // Matrix
+    document.getElementById('mat-a').textContent = fmt(s.thermal,1);
+    document.getElementById('mat-b').textContent = fmt(s.coupling,1);
+    document.getElementById('mat-b2').textContent = fmt(s.coupling,1);
+    document.getElementById('mat-d').textContent = fmt(s.noise,1);
+    document.getElementById('char-eq').innerHTML =
+      'λ² − ' + fmt(s.eig.trace,1) + 'λ + ' + fmt(s.eig.det,1) + ' = 0<br>' +
+      'λ = (' + fmt(s.eig.trace,1) + ' ± √' + fmt(Math.max(s.eig.disc*s.eig.disc,0),1) + ') / 2';
+    document.getElementById('lambda1').textContent = fmt(s.eig.l1,2);
+    document.getElementById('lambda2').textContent = fmt(s.eig.l2,2);
+    document.getElementById('attrib-thermal').textContent = fmt(s.attribThermal,0)+'%';
+    document.getElementById('attrib-noise').textContent = fmt(s.attribNoise,0)+'%';
+    document.getElementById('attrib-thermal-bar').style.width = clamp(s.attribThermal,0,100)+'%';
+    document.getElementById('attrib-noise-bar').style.width = clamp(s.attribNoise,0,100)+'%';
+
+    renderEllipse(s);
+
+    // State vector
+    document.getElementById('alpha2').textContent = pct(s.alpha*s.alpha,1);
+    document.getElementById('beta2').textContent = pct(s.beta*s.beta,1);
+    document.getElementById('alpha2-bar').style.width = (s.alpha*s.alpha*100)+'%';
+    document.getElementById('beta2-bar').style.width = (s.beta*s.beta*100)+'%';
+    document.getElementById('alpha-beta').textContent = 'α=' + fmt(s.alpha,3) + ' · β=' + fmt(s.beta,3);
+    renderStateCircle(s);
+
+    // Tensor product
+    document.getElementById('comb-vals').textContent = 'α=' + fmt(s.alphaC,3) + ' · β=' + fmt(s.betaC,3);
+    document.getElementById('lub-vals').textContent = 'α=' + fmt(s.alphaL,3) + ' · β=' + fmt(s.betaL,3);
+
+    const rows = [
+      { key:'HH', ket:'|HH⟩', meaning:'Combustion healthy, lubrication healthy', color:'var(--green)' },
+      { key:'HD', ket:'|HD⟩', meaning:'Combustion healthy, lubrication damaged', color:'var(--amber)' },
+      { key:'DH', ket:'|DH⟩', meaning:'Combustion damaged, lubrication healthy', color:'var(--amber)' },
+      { key:'DD', ket:'|DD⟩', meaning:'Combustion damaged, lubrication damaged', color:'var(--red)' },
+    ];
+    const tbody = document.getElementById('joint-tbody');
+    tbody.innerHTML = rows.map(function(r){
+      const p = s.joint[r.key].p*100;
+      return '<tr>' +
+        '<td class="ket">'+r.ket+'</td>' +
+        '<td>'+r.meaning+'</td>' +
+        '<td class="pbar-cell"><div class="bar-track"><div class="bar-fill" style="width:'+clamp(p,0,100)+'%;background:'+r.color+';"></div></div></td>' +
+        '<td><span class="pval">'+fmt(p,1)+'%</span></td>' +
+        '</tr>';
+    }).join('');
+
+    document.getElementById('callout-atleast').textContent = pct(1-s.joint.HH.p,1);
+    document.getElementById('callout-both').textContent = pct(s.joint.DD.p,1);
+
+    renderEvolution(v);
+  }
+
+  Object.keys(els).forEach(function(k){ els[k].addEventListener('input', render); });
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    Object.keys(DEFAULTS).forEach(function(k){ els[k].value = DEFAULTS[k]; });
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
