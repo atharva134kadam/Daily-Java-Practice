@@ -7,6 +7,7 @@ class Parent{
         this.age = age;
     }
 
+    @Override
     public String toString(){
         return "Name: "+Name+" , "+"age: "+age;
     }
