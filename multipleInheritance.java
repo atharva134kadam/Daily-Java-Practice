@@ -11,7 +11,7 @@ interface C extends A{
 }
 
 class D implements A,B{
-    @Override
+    @Override 
     public void fun(){
         System.out.println("This is fun");
     }
