@@ -2,6 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "java",
+      "name": "Generics",
+      "request": "launch",
+      "mainClass": "Generics",
+      "projectName": "Java Practice_4379dcdb"
+    },
+    {
       "name": "C/C++ Runner: Debug Session",
       "type": "lldb",
       "request": "launch",
