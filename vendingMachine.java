@@ -13,10 +13,6 @@ public class vendingMachine{
         Balance.put(5,3);
         Balance.put(2,0);
         Balance.put(1,500);
-
-        int sum = 500;
-        int sum1=0;
-        int input = 112;
         int amt = 388;
         int remaining = amt;
 

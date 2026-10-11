@@ -1,5 +1,4 @@
 class BankAcc{
-    private long accNo;
     private double balance;
 
     public void deposit(double amt){
